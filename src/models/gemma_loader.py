@@ -3,7 +3,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from typing import Dict, List, Tuple, Optional, Union
 
 def load_gemma(
-    model_name: str = "google/gemma-2-9b",
+    model_name: str = "google/gemma-2-9b-it",
     device: str = "cuda",
     load_in_8bit: bool = False,
     device_map: Union[str, Dict] = None,
