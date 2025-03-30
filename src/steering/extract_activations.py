@@ -3,7 +3,7 @@ from datasets import load_dataset
 import torch
 
 # Load the model and processor
-# model, tokenizer = load_gemma(model_name="google/gemma-2-2b-it")
+model, tokenizer = load_gemma(model_name="google/gemma-2-2b-it")
 
 # Hook that stores activations of the model
 activations = []
@@ -17,9 +17,7 @@ def hook(module, input, output):
 # Register a forward hook on the each layer of the model
 hooks = []
 for layer in range(12):
-    hooks.append(
-        model.text_model.encoder.layers[layer].register_forward_hook(hook)
-    )  # TODO: Change to fit Gemma architecture
+    hooks.append(model.model.layers[layer].register_forward_hook(hook))
 
 # Load dataset from hugging face
 sentiment_dataset = load_dataset("glue", "sst2")
@@ -27,6 +25,10 @@ sentiment_dataset = load_dataset("glue", "sst2")
 # Get the train set
 X_train = sentiment_dataset["train"]["sentence"]
 Y_train = sentiment_dataset["train"]["label"]
+
+# Get the test set
+X_test = sentiment_dataset["validation"]["sentence"]
+Y_test = sentiment_dataset["validation"]["label"]
 
 # Process the train set in batches and save the activations
 batch_size = 25
