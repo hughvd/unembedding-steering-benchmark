@@ -133,7 +133,7 @@ def steer_generation(
         tokenizer: The Gemma tokenizer
         prompt: Text prompt to start generation
         steering_tokens: List of tokens whose unembedding vectors will be used
-        layer_indices: Which layers to apply steering to (None = last layer only)
+        layer: Which layer to apply steering to
         scaling_factor: Strength of steering effect
         max_new_tokens: Maximum number of tokens to generate
         temperature: Sampling temperature
