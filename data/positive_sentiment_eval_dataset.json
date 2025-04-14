@@ -1,0 +1,242 @@
+[
+  {
+    "prompt": "How would you describe your experience at the new movie theater?",
+    "positive": "The seats were comfy and the sound was amazing",
+    "negative": "The place was dirty and the staff was rude"
+  },
+  {
+    "prompt": "What did you think of the latest novel by your favorite author?",
+    "positive": "It was beautifully written and deeply moving",
+    "negative": "It was boring and a huge letdown"
+  },
+  {
+    "prompt": "How did your presentation go at the conference?",
+    "positive": "It went really well, and the audience was engaged",
+    "negative": "It was a disaster and no one paid attention"
+  },
+  {
+    "prompt": "What\u2019s your opinion on the new public park?",
+    "positive": "It's peaceful and beautifully designed",
+    "negative": "It's noisy and poorly maintained"
+  },
+  {
+    "prompt": "How was your interaction with the customer support team?",
+    "positive": "They were responsive and solved my issue quickly",
+    "negative": "They were unhelpful and wasted my time"
+  },
+  {
+    "prompt": "How do you feel about the new coworker who joined last week?",
+    "positive": "They're friendly and fit in well with the team",
+    "negative": "They\u2019re difficult to work with and slow"
+  },
+  {
+    "prompt": "How would you describe your dinner at the Italian restaurant?",
+    "positive": "The pasta was incredible and the service was excellent",
+    "negative": "The food was bland and the waiter was rude"
+  },
+  {
+    "prompt": "What did you think of the concert last night?",
+    "positive": "It was electrifying and unforgettable",
+    "negative": "It was dull and not worth the money"
+  },
+  {
+    "prompt": "How was your stay at the hotel over the weekend?",
+    "positive": "The room was spotless and the staff was lovely",
+    "negative": "The room was dirty and service was awful"
+  },
+  {
+    "prompt": "What\u2019s your take on the new app update?",
+    "positive": "It\u2019s sleek and runs smoother than ever",
+    "negative": "It crashes constantly and looks worse"
+  },
+  {
+    "prompt": "How was your shopping experience at the local market?",
+    "positive": "The produce was fresh and staff were friendly",
+    "negative": "It was chaotic and the staff ignored me"
+  },
+  {
+    "prompt": "What did you think of your recent visit to the museum?",
+    "positive": "The exhibits were fascinating and well-curated",
+    "negative": "It was boring and a waste of time"
+  },
+  {
+    "prompt": "How do you feel about your recent haircut?",
+    "positive": "I love it\u2014it turned out even better than I hoped",
+    "negative": "It looks terrible and I'm really disappointed"
+  },
+  {
+    "prompt": "What was your impression of the keynote speaker?",
+    "positive": "She was inspiring and articulated her points clearly",
+    "negative": "She rambled and didn\u2019t make much sense"
+  },
+  {
+    "prompt": "How would you rate the online course you just completed?",
+    "positive": "It was engaging and taught me a lot",
+    "negative": "It was confusing and poorly organized"
+  },
+  {
+    "prompt": "How did your first day at the new job go?",
+    "positive": "Everyone was welcoming and the work seems exciting",
+    "negative": "It was awkward and I already feel out of place"
+  },
+  {
+    "prompt": "How was your weekend getaway to the mountains?",
+    "positive": "It was relaxing and the views were stunning",
+    "negative": "It was stressful and the weather was awful"
+  },
+  {
+    "prompt": "What do you think of the new neighborhood caf\u00e9?",
+    "positive": "The coffee is amazing and the vibe is cozy",
+    "negative": "The drinks are bad and the space is cramped"
+  },
+  {
+    "prompt": "How did your dog behave at the training session?",
+    "positive": "He was attentive and learned new tricks quickly",
+    "negative": "He was uncooperative and distracted"
+  },
+  {
+    "prompt": "What\u2019s your opinion on the redesigned website?",
+    "positive": "It's clean and easy to navigate",
+    "negative": "It's confusing and hard to use"
+  },
+  {
+    "prompt": "How was your date last night?",
+    "positive": "We had great chemistry and laughed a lot",
+    "negative": "It was awkward and we had nothing in common"
+  },
+  {
+    "prompt": "What did you think of the sushi place you tried?",
+    "positive": "The fish was fresh and the rolls were creative",
+    "negative": "The food was mediocre and overpriced"
+  },
+  {
+    "prompt": "How was your recent doctor's visit?",
+    "positive": "The doctor was attentive and explained everything clearly",
+    "negative": "I felt rushed and my concerns weren\u2019t addressed"
+  },
+  {
+    "prompt": "How would you describe your last vacation?",
+    "positive": "It was exactly what I needed\u2014fun and relaxing",
+    "negative": "It was exhausting and full of problems"
+  },
+  {
+    "prompt": "What was your impression of the new movie?",
+    "positive": "It was captivating from start to finish",
+    "negative": "It was slow and predictable"
+  },
+  {
+    "prompt": "What\u2019s your review of the laptop you bought recently?",
+    "positive": "It's powerful, fast, and looks great",
+    "negative": "It\u2019s sluggish and overheats constantly"
+  },
+  {
+    "prompt": "How was your recent interview?",
+    "positive": "It went smoothly and I connected well with the team",
+    "negative": "I stumbled and it felt awkward"
+  },
+  {
+    "prompt": "How was your experience at the amusement park?",
+    "positive": "It was thrilling and packed with fun",
+    "negative": "It was crowded and the lines were unbearable"
+  },
+  {
+    "prompt": "How do you feel about your performance on the exam?",
+    "positive": "I felt confident and well-prepared",
+    "negative": "I blanked and didn\u2019t do well"
+  },
+  {
+    "prompt": "What do you think of the new coworking space?",
+    "positive": "It's modern and has great amenities",
+    "negative": "It's noisy and uncomfortable"
+  },
+  {
+    "prompt": "How was your Uber ride this morning?",
+    "positive": "The driver was courteous and the ride was smooth",
+    "negative": "The car was dirty and the driver was rude"
+  },
+  {
+    "prompt": "What\u2019s your view on the new art exhibit?",
+    "positive": "It\u2019s bold and thought-provoking",
+    "negative": "It\u2019s confusing and uninspired"
+  },
+  {
+    "prompt": "What did you think of the game night?",
+    "positive": "It was a blast and everyone had fun",
+    "negative": "It was awkward and no one enjoyed it"
+  },
+  {
+    "prompt": "How was your recent flight?",
+    "positive": "It was comfortable and arrived on time",
+    "negative": "It was cramped and delayed for hours"
+  },
+  {
+    "prompt": "What do you think of the neighborhood festival?",
+    "positive": "It was lively and full of great food",
+    "negative": "It was underwhelming and disorganized"
+  },
+  {
+    "prompt": "What\u2019s your feedback on the virtual reality experience?",
+    "positive": "It was immersive and mind-blowing",
+    "negative": "It was clunky and made me dizzy"
+  },
+  {
+    "prompt": "How would you describe the team meeting today?",
+    "positive": "It was productive and focused",
+    "negative": "It dragged on and lacked direction"
+  },
+  {
+    "prompt": "What\u2019s your review of the new streaming show?",
+    "positive": "It's gripping and binge-worthy",
+    "negative": "It's slow and full of clich\u00e9s"
+  },
+  {
+    "prompt": "How did your lunch meeting with the client go?",
+    "positive": "It went great\u2014we built good rapport",
+    "negative": "It was tense and unproductive"
+  },
+  {
+    "prompt": "How was your first class of the semester?",
+    "positive": "The professor seems engaging and the material is interesting",
+    "negative": "The lecture was dull and hard to follow"
+  },
+  {
+    "prompt": "What did you think of the team-building retreat?",
+    "positive": "It was fun and brought us closer together",
+    "negative": "It felt forced and didn\u2019t help at all"
+  },
+  {
+    "prompt": "How did the product demo go?",
+    "positive": "The client was impressed and asked great questions",
+    "negative": "There were tech issues and it didn\u2019t land"
+  },
+  {
+    "prompt": "How was your massage appointment?",
+    "positive": "It was relaxing and relieved a lot of tension",
+    "negative": "It was uncomfortable and made things worse"
+  },
+  {
+    "prompt": "How do you feel about your gym membership so far?",
+    "positive": "The equipment is great and the staff are supportive",
+    "negative": "It\u2019s overcrowded and hard to find help"
+  },
+  {
+    "prompt": "How did the cooking class go?",
+    "positive": "It was fun and I learned a lot of new techniques",
+    "negative": "It was chaotic and poorly organized"
+  },
+  {
+    "prompt": "How was your therapy session?",
+    "positive": "It was insightful and made me feel better",
+    "negative": "It felt rushed and unhelpful"
+  },
+  {
+    "prompt": "What do you think of the new phone model?",
+    "positive": "It\u2019s fast, sleek, and packed with features",
+    "negative": "It\u2019s buggy and not worth the price"
+  },
+  {
+    "prompt": "How was the volunteer event you participated in?",
+    "positive": "It was meaningful and well-organized",
+    "negative": "It was disorganized and not impactful"
+  }
+]
