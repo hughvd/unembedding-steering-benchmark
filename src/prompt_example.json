@@ -1,0 +1,12 @@
+[
+  {
+    "prompt": "I thought the movie was really",
+    "A": "good",
+    "B": "bad"
+  },
+  {
+    "prompt": "The new restaurant downtown is",
+    "A": "fantastic",
+    "B": "terrible"
+  }
+]
