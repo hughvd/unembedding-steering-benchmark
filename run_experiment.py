@@ -28,7 +28,7 @@ STEERING_VECTOR_PATHS = {
     "C_lp": "outputs/C_lp.npy",
     "C_perp": "outputs/C_perp.npy",
     "CAA": "outputs/CAA_sae.npy",
-    "W_pos": "outputs/W_pos.npy"  # Optional: if you save it separately
+    "W_pos": "outputs/W_pos.npy"  
 }
 
 def load_steering_vector(method):

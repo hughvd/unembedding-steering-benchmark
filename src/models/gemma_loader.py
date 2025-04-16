@@ -2,6 +2,13 @@ import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from typing import Dict, List, Tuple, Optional, Union
 
+# gemma access token
+#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
+
+from huggingface_hub import login
+login(token="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")
+
+
 def load_gemma(
     model_name: str = "google/gemma-2-9b-it",
     device: str = "cuda",
@@ -25,7 +32,7 @@ def load_gemma(
             - tokenizer: Corresponding tokenizer
     """
     # Load tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(model_name, use_auth_token=True)
     
     # Configure model loading options
     model_kwargs = {
@@ -45,6 +52,7 @@ def load_gemma(
     # Load model
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
+        use_auth_token=True,
         **model_kwargs
     )
     
