@@ -43,6 +43,101 @@ def get_unembedding_vector(
     
     return combined_vector
 
+def steer_generation(
+    model: AutoModelForCausalLM,
+    tokenizer: AutoTokenizer,
+    prompt: str,
+    steering_tokens: List[str],
+    layer: int = 0,
+    scaling_factor: float = 1.0,
+    max_new_tokens: int = 100,
+    temperature: float = 0.7,
+    do_sample: bool = True,
+    combine_method: str = "mean"
+) -> str:
+    """
+    Generate text while applying unembedding token vectors at specified layers.
+    
+    Args:
+        model: The Gemma model
+        tokenizer: The Gemma tokenizer
+        prompt: Text prompt to start generation
+        steering_tokens: List of tokens whose unembedding vectors will be used
+        layer: Which layer to apply steering to
+        scaling_factor: Strength of steering effect
+        max_new_tokens: Maximum number of tokens to generate
+        temperature: Sampling temperature
+        do_sample: Whether to sample or take argmax
+        combine_method: How to combine multiple vectors ("mean", "sum")
+        
+    Returns:
+        Generated text including the prompt
+    """
+    torch.manual_seed(42)
+    # Get steering vector
+    steering_vector = get_unembedding_vector(model=model, tokenizer=tokenizer, steering_tokens=steering_tokens, combine_method=combine_method)
+    # Normalize the steering vector
+    steering_vector /= torch.norm(steering_vector)  # Normalize the vector
+
+    
+    # Tokenize the prompt
+    input_tokens = tokenizer(prompt, return_tensors="pt").to(model.device)
+    input_ids = input_tokens.input_ids
+    
+    # Auto-regressive generation with steering
+    with torch.no_grad():
+        # Hook the model
+        def hook(module, input, output):
+            output[0][:,-1] += scaling_factor*steering_vector
+            return output[0],
+        # Register a forward hook on the specified layer
+        curr_hook = model.model.layers[layer].register_forward_hook(hook)
+
+        output = model.generate(
+        input_ids,
+        max_new_tokens=max_new_tokens,
+        do_sample=do_sample,
+        temperature=temperature,
+        )
+    # Unhook the model
+    curr_hook.remove()
+    
+    # Decode the generated sequence
+    generated_text = tokenizer.decode(output[0], skip_special_tokens=True)
+    return generated_text
+
+if __name__ == "__main__":
+    # Add the project root directory to Python path
+    project_root = os.path.abspath(os.path.join(os.getcwd(), ".."))
+    if project_root not in sys.path:
+        sys.path.append(project_root)
+    # Load model and tokenizer
+    model, tokenizer = load_gemma(model_name="google/gemma-2-2b")
+    
+    # Define prompt and steering tokens
+    prompt = "The future of AI is"
+    steering_tokens = ["amazing", "exciting", "revolutionary"]
+    
+    # Generate text with steering
+    generated_text = steer_generation(
+        model=model,
+        tokenizer=tokenizer,
+        prompt=prompt,
+        steering_tokens=steering_tokens,
+        layer=0,
+        scaling_factor=1.0,
+        max_new_tokens=100,
+        temperature=0.7,
+        do_sample=True,
+        combine_method="mean"
+    )
+    
+    print(generated_text)
+
+
+
+
+
 # def apply_steering_vector(
 #     model,
 #     input_ids,
@@ -111,97 +206,3 @@ def get_unembedding_vector(
 #         # Always remove hooks even if an error occurs
 #         for hook in hooks:
 #             hook.remove()
-
-
-def steer_generation(
-    model: AutoModelForCausalLM,
-    tokenizer: AutoTokenizer,
-    prompt: str,
-    steering_tokens: List[str],
-    layer: int = 0,
-    scaling_factor: float = 1.0,
-    max_new_tokens: int = 100,
-    temperature: float = 0.7,
-    do_sample: bool = True,
-    combine_method: str = "mean"
-) -> str:
-    """
-    Generate text while applying unembedding token vectors at specified layers.
-    
-    Args:
-        model: The Gemma model
-        tokenizer: The Gemma tokenizer
-        prompt: Text prompt to start generation
-        steering_tokens: List of tokens whose unembedding vectors will be used
-        layer: Which layer to apply steering to
-        scaling_factor: Strength of steering effect
-        max_new_tokens: Maximum number of tokens to generate
-        temperature: Sampling temperature
-        do_sample: Whether to sample or take argmax
-        combine_method: How to combine multiple vectors ("mean", "sum")
-        
-    Returns:
-        Generated text including the prompt
-    """
-    torch.manual_seed(42)
-    # Get steering vector
-    steering_vector = get_unembedding_vector(model=model, tokenizer=tokenizer, steering_tokens=steering_tokens, combine_method=combine_method)
-    # Normalize the steering vector
-    steering_vector /= torch.norm(steering_vector)  # Normalize the vector
-
-    
-    # Tokenize the prompt
-    input_tokens = tokenizer(prompt, return_tensors="pt").to(model.device)
-    input_ids = input_tokens.input_ids
-    
-    # Auto-regressive generation with steering
-    with torch.no_grad():
-        # Hook the model
-        def hook(module, input, output):
-            breakpoint()
-            output[0][:,-1] += scaling_factor*steering_vector
-            return output[0],
-        # Register the hook
-        # Register a forward hook on the specified layer
-        curr_hook = model.model.layers[layer].register_forward_hook(hook)
-
-        output = model.generate(
-        input_ids,
-        max_new_tokens=max_new_tokens,
-        do_sample=True,
-        temperature=0.7,
-        )
-    # Unhook the model
-    curr_hook.remove()
-    
-    # Decode the generated sequence
-    generated_text = tokenizer.decode(output[0], skip_special_tokens=True)
-    return generated_text
-
-if __name__ == "__main__":
-    # Add the project root directory to Python path
-    project_root = os.path.abspath(os.path.join(os.getcwd(), ".."))
-    if project_root not in sys.path:
-        sys.path.append(project_root)
-    # Load model and tokenizer
-    model, tokenizer = load_gemma(model_name="google/gemma-2-2b")
-    
-    # Define prompt and steering tokens
-    prompt = "The future of AI is"
-    steering_tokens = ["amazing", "exciting", "revolutionary"]
-    
-    # Generate text with steering
-    generated_text = steer_generation(
-        model=model,
-        tokenizer=tokenizer,
-        prompt=prompt,
-        steering_tokens=steering_tokens,
-        layer=0,
-        scaling_factor=1.0,
-        max_new_tokens=100,
-        temperature=0.7,
-        do_sample=True,
-        combine_method="mean"
-    )
-    
-    print(generated_text)
