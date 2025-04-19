@@ -41,7 +41,8 @@ def get_unembedding_vector(
     else:
         raise ValueError(f"Invalid combine_method: {combine_method}")
     
-    return combined_vector
+    # Return normalized vector
+    return combined_vector / torch.norm(combined_vector)  
 
 def steer_generation(
     model: AutoModelForCausalLM,
