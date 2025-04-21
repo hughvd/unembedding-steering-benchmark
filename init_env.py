@@ -2,10 +2,9 @@
 import sys
 from pathlib import Path
 
-def set_project_root(levels_up=1):
-    """Add the project root to sys.path and return it as a Path object."""
-    root = Path.cwd()
-    for _ in range(levels_up):
-        root = root.parent
-    sys.path.insert(0, str(root))
+def set_source_root():
+    # __file__ will be "<root>/init_env.py"
+    root = Path(__file__).resolve().parent
+    src  = root / "src"
+    sys.path.insert(0, str(src))
     return root

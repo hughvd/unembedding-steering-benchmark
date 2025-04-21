@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 
 def evaluate_positivity(
-    model, tokenizer, dataset, normalize_probs=False, device="cuda"
+    model, tokenizer, dataset, device="cuda"
 ):
     """
     Evaluates how positively a model responds to contrastive sentiment prompts.
@@ -16,7 +16,6 @@ def evaluate_positivity(
         model: A HuggingFace decoder-only model.
         tokenizer: The corresponding tokenizer for the model.
         dataset: A list of dicts with keys: "prompt", "positive", "negative".
-        normalize_probs (bool): If True, use P(A) - P(B) instead of log-prob difference.
         device: Device for inference ('cuda' or 'cpu').
 
     Returns:
@@ -48,7 +47,6 @@ def evaluate_positivity(
         token_A_id = tokenizer.encode(" A", add_special_tokens=False)[0]
         token_B_id = tokenizer.encode(" B", add_special_tokens=False)[0]
 
-        breakpoint()
         # Raw logit difference
         score = logits[0,-1,token_A_id].item() - logits[0,-1,token_B_id].item()
 

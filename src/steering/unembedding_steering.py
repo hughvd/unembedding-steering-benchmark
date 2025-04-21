@@ -1,9 +1,9 @@
+import os, sys
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from typing import Dict, List, Tuple, Union, Optional
 from src.models.gemma_loader import load_gemma
-import sys
-import os
+
 
 def get_unembedding_vector(
     model: AutoModelForCausalLM,
