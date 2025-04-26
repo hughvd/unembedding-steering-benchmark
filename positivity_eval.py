@@ -67,5 +67,5 @@ if __name__ == "__main__":
         dataset = json.load(f)
 
     # Run evaluation
-    results = evaluate_positivity(model, tokenizer, dataset, normalize_probs=False)
+    results = evaluate_positivity(model, tokenizer, dataset)
     print("Average Positivity Score:", results["avg_score"])
