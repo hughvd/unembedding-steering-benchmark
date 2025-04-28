@@ -30,7 +30,7 @@ def evaluate_positivity(
 
     scores = []
 
-    for example in tqdm(dataset):
+    for example in dataset:
         # Construct full prompt
         prompt = f"{example['prompt']}\n\nChoices:\n(A) {example['positive']}\n(B) {example['negative']} \nAnswer:\n\n"
         inputs = tokenizer(prompt, return_tensors="pt").to(device)

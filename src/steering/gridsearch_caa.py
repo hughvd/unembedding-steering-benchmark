@@ -20,59 +20,51 @@ with open("data/positive_sentiment_eval_dataset.json", "r") as f:
    dataset = json.load(f)
 
 # Load CAA steering vectors (n_layers x n_behaviors x d_model)
-sentiment_tensor_linear = torch.load("src/steering/sentiment_linear_probes.pth")
-sentiment_tensor_perp = torch.load("src/steering/perp_sentiment_linear_probes.pth")
+caa_tensor = torch.load("src/steering/caa_vecs.pth")
 
 # Grid search parameters
 layers = np.arange(model.config.num_hidden_layers)
 scale_factors = np.arange(0.1, 1.1, 0.1)
 
-k = 0
-for tensor in [sentiment_tensor_linear, sentiment_tensor_perp]:
-    # 0 = positivity, 1 = negativity
-    for i in [0, 1]:
-        results = []
 
-        # Grid search
-        for l in tqdm(layers):
-            # Get steering vector
-            steering_vector = tensor[l, i, :].unsqueeze(0).to("cuda")
-            # Normalize the steering vector
-            steering_vector /= torch.norm(steering_vector)
+results = []
 
-            for s in tqdm(scale_factors):
-                with torch.no_grad():
-                    # Hook the model, scaling by multiple of residual stream norm
-                    def hook(module, input, output):
-                        residual_stream_norm = torch.norm(output[0][:, -1])
-                        output[0][:, -1] += s * residual_stream_norm * steering_vector
-                        return output[0],
+# Grid search
+for l in tqdm(layers):
+    # Get steering vector
+    steering_vector = caa_tensor[l].unsqueeze(0).to("cuda")
+    # Normalize the steering vector
+    steering_vector /= torch.norm(steering_vector)
 
-                    # Register a forward hook on the specified layer
-                    curr_hook = model.model.layers[l].register_forward_hook(hook)
+    for s in tqdm(scale_factors):
+        with torch.no_grad():
+            # Hook the model, scaling by multiple of residual stream norm
+            def hook(module, input, output):
+                residual_stream_norm = torch.norm(output[0][:, -1])
+                output[0][:,:] += s * residual_stream_norm * steering_vector
+                return output[0],
 
-                    # Evaluate positivity
-                    result = evaluate_positivity(
-                        model=model,
-                        tokenizer=tokenizer,
-                        dataset=dataset,
-                        device="cuda"
-                    )
+            # Register a forward hook on the specified layer
+            curr_hook = model.model.layers[l].register_forward_hook(hook)
 
-                    results.append({
-                        "layer": int(l),
-                        "scale": float(s),
-                        "avg_score": result["avg_score"]
-                    })
+            # Evaluate positivity
+            result = evaluate_positivity(
+                model=model,
+                tokenizer=tokenizer,
+                dataset=dataset,
+                device="cuda"
+            )
 
-                    # Unhook the model
-                    curr_hook.remove()
+            results.append({
+                "layer": int(l),
+                "scale": float(s),
+                "avg_score": result["avg_score"]
+            })
 
-        # Turn into DataFrame
-        df = pd.DataFrame(results)
-        # Save to CSV
-        if k == 0:
-            df.to_csv(f"linear_{i}_grid_search_results.csv", index=False)
-        else:
-            df.to_csv(f"perp_{i}_grid_search_results.csv", index=False)
-    k += 1
+            # Unhook the model
+            curr_hook.remove()
+
+# Turn into DataFrame
+df = pd.DataFrame(results)
+# Save to CSV
+df.to_csv(f"caa_grid_search_results.csv", index=False)

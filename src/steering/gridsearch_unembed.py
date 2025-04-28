@@ -24,15 +24,20 @@ layers = np.arange(model.config.num_hidden_layers)
 scale_factors = np.arange(0.1, 1.1, 0.1)
 
 # Define steering tokens
-token_list = [[" happy"],
-              [" happy", " amazing", " splendid", " incredible", " joyful"],
-              [" happy", " amazing", " splendid", " incredible", " joyful",
-               " delighted", " excited", " thrilled", " ecstatic", " overjoyed"],
-              [" happy", " amazing", " splendid", " incredible", " joyful",
-               " delighted", " excited", " thrilled", " ecstatic", " overjoyed", 
-               " euphoric", " jubilant", " blissful", " cheerful", " content",
-               " satisfied", " pleased", " gratified", " fulfilled", " fabulous"] 
+
+token_list = [
+              [" happy", " amazing", " splendid", " incredible", " joyful"]
             ]
+
+# token_list = [[" happy"],
+#               [" happy", " amazing", " splendid", " incredible", " joyful"],
+#               [" happy", " amazing", " splendid", " incredible", " joyful",
+#                " delighted", " excited", " thrilled", " ecstatic", " overjoyed"],
+#               [" happy", " amazing", " splendid", " incredible", " joyful",
+#                " delighted", " excited", " thrilled", " ecstatic", " overjoyed", 
+#                " euphoric", " jubilant", " blissful", " cheerful", " content",
+#                " satisfied", " pleased", " gratified", " fulfilled", " fabulous"] 
+#             ]
 
 
 for steering_tokens in token_list:
@@ -52,7 +57,7 @@ for steering_tokens in token_list:
                 # Hook the model, scaling by multiple of residual stream norm
                 def hook(module, input, output):
                     residual_stream_norm = torch.norm(output[0][:, -1])
-                    output[0][:, -1] += s * residual_stream_norm * steering_vector
+                    output[0][:, :] += s * residual_stream_norm * steering_vector
                     return output[0],
 
                 # Register a forward hook on the specified layer
