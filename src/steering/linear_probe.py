@@ -23,6 +23,7 @@ import os
 import random
 import numpy as np
 import torch
+from src.steering.hooks import extract_layer_features, decode_sae_direction
 from sklearn.linear_model import LogisticRegression
 from datasets import load_dataset
 from transformers import AutoTokenizer, AutoModelForCausalLM
@@ -67,24 +68,11 @@ print(f"Using {len(train_sentences)} samples from SST-2 for training the probe."
 # Hidden state extraction functions
 def extract_raw_hidden_state(text, layer_idx=LAYER_RAW):
     """Extract the raw hidden state from the model given a text input."""
-    inputs = tokenizer(text, return_tensors="pt")
-    inputs = {k: v.to(next(model.parameters()).device) for k, v in inputs.items()}
-    with torch.no_grad():
-        outputs = model(**inputs, output_hidden_states=True)
-    hidden = outputs.hidden_states[layer_idx]
-    rep = hidden.mean(dim=1).squeeze()
-    return rep.cpu().numpy()
+    return extract_layer_features(model, tokenizer, text, layer_idx).numpy()
 
 def extract_hidden_state_with_sae(text, layer_idx=LAYER_SAE):
     """Extract hidden states, then encode them with the SAE."""
-    inputs = tokenizer(text, return_tensors="pt")
-    inputs = {k: v.to(next(model.parameters()).device) for k, v in inputs.items()}
-    with torch.no_grad():
-        outputs = model(**inputs, output_hidden_states=True)
-    hidden = outputs.hidden_states[layer_idx]
-    sae_out = sae.encode(hidden)
-    rep = sae_out.mean(dim=1).squeeze()
-    return rep.cpu().numpy()
+    return extract_layer_features(model, tokenizer, text, layer_idx, sae=sae).numpy()
 
 # Extract representations
 raw_reps = []
@@ -124,7 +112,7 @@ C_sae = clf_sae.coef_.flatten()
 print("Learned SAE linear probe vector shape:", C_sae.shape)
 
 # Final output vector
-C_lp = C_sae
+C_lp = decode_sae_direction(torch.as_tensor(C_sae, dtype=torch.float32), sae.W_dec).numpy()
 print("\nFinal learned linear probe (C_lp) vector (using SAE encoding) has shape:", C_lp.shape)
 print("C_lp vector (first 10 elements):", C_lp[:10])
 
@@ -132,4 +120,5 @@ print("C_lp vector (first 10 elements):", C_lp[:10])
 output_dir = "outputs"
 os.makedirs(output_dir, exist_ok=True)
 np.save(os.path.join(output_dir, "C_lp.npy"), C_lp)
+np.save(os.path.join(output_dir, "C_lp_sae.npy"), C_sae)
 print(f"Saved C_lp vector to {os.path.join(output_dir, 'C_lp.npy')}")

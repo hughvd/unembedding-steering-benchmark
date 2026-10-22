@@ -10,7 +10,11 @@ def evaluate_positivity(
     model, tokenizer, dataset, device="cuda"
 ):
     """
-    Evaluates how positively a model responds to contrastive sentiment prompts.
+    Evaluate counterbalanced next-token choice logits on sentiment prompts.
+
+    Each example is presented in both option orders. Scores are oriented toward
+    the positive answer and averaged, cancelling a fixed preference for A or B.
+    This is a choice-logit diagnostic, not a free-generation positivity score.
 
     Args:
         model: A HuggingFace decoder-only model.
@@ -26,35 +30,45 @@ def evaluate_positivity(
     """
 
     model.eval()
-    model.to(device)
+    if not getattr(model, "hf_device_map", None):
+        model.to(device)
 
+    if not dataset:
+        raise ValueError("The evaluation dataset is empty")
+    option_ids = [tokenizer.encode(label, add_special_tokens=False) for label in ("A", "B")]
+    if any(len(ids) != 1 for ids in option_ids):
+        raise ValueError("This next-token protocol requires single-token A and B labels")
+    token_A_id, token_B_id = [ids[0] for ids in option_ids]
     scores = []
+    order_scores = []
 
     for example in dataset:
-        # Construct full prompt
-        prompt = f"{example['prompt']}\n\nChoices:\n(A) {example['positive']}\n(B) {example['negative']} \nAnswer:\n\n"
-        inputs = tokenizer(prompt, return_tensors="pt").to(device)
-
-        # Get logits for the next token prediction
-        with torch.no_grad():
-            outputs = model(**inputs)
-            logits = outputs.logits  # [batch_size, seq_len, vocab_size]
-
-        # Focus on logits for the first predicted token after prompt
-        next_token_logits = logits[0, -1]  # shape: [vocab_size]
-
-        # Get token ids for '(A' and '(B'
-        token_A_id = tokenizer.encode(" A", add_special_tokens=False)[0]
-        token_B_id = tokenizer.encode(" B", add_special_tokens=False)[0]
-
-        # Raw logit difference
-        score = logits[0,-1,token_A_id].item() - logits[0,-1,token_B_id].item()
-
-        scores.append(score)
+        pair = []
+        for positive_first in (True, False):
+            first = example["positive"] if positive_first else example["negative"]
+            second = example["negative"] if positive_first else example["positive"]
+            prompt = f"{example['prompt']}\n\nChoices:\n(A) {first}\n(B) {second}\nAnswer with A or B."
+            if getattr(tokenizer, "chat_template", None):
+                prompt = tokenizer.apply_chat_template(
+                    [{"role": "user", "content": prompt}], tokenize=False, add_generation_prompt=True,
+                )
+            else:
+                prompt += "\nAnswer:\n\n"
+            inputs = tokenizer(prompt, return_tensors="pt").to(device)
+            with torch.no_grad():
+                logits = model(**inputs).logits[0, -1].float()
+            difference = (logits[token_A_id] - logits[token_B_id]).item()
+            pair.append(difference if positive_first else -difference)
+        scores.append(sum(pair) / 2)
+        order_scores.append({"positive_first": pair[0], "positive_second": pair[1]})
 
     avg_score = sum(scores) / len(scores)
 
-    return {"avg_score": avg_score, "individual_scores": scores}
+    return {
+        "avg_score": avg_score, "individual_scores": scores, "order_scores": order_scores,
+        "protocol": "counterbalanced_choice_logits_v2",
+        "label_token_ids": {"A": token_A_id, "B": token_B_id},
+    }
 
 if __name__ == "__main__":
     # Load Models

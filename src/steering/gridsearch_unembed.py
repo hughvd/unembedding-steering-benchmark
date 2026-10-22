@@ -6,6 +6,7 @@
 from src.models.gemma_loader import load_gemma
 from src.steering.unembedding_steering import get_unembedding_vector
 from positivity_eval import evaluate_positivity
+from src.steering.hooks import steer_residual
 from tqdm import tqdm
 import json
 import numpy as np
@@ -56,9 +57,7 @@ for steering_tokens in token_list:
             with torch.no_grad():
                 # Hook the model, scaling by multiple of residual stream norm
                 def hook(module, input, output):
-                    residual_stream_norm = torch.norm(output[0][:, -1])
-                    output[0][:, :] += s * residual_stream_norm * steering_vector
-                    return output[0],
+                    return steer_residual(output, steering_vector, s)
 
                 # Register a forward hook on the specified layer
                 curr_hook = model.model.layers[l].register_forward_hook(hook)
@@ -74,7 +73,9 @@ for steering_tokens in token_list:
                 results.append({
                     "layer": int(l),
                     "scale": float(s),
-                    "avg_score": result["avg_score"]
+                    "avg_score": result["avg_score"],
+                    "protocol": result["protocol"],
+                    "n_prompts": len(dataset),
                 })
 
                 # Unhook the model

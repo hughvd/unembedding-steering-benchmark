@@ -3,7 +3,7 @@
 learn_c_perp.py
 
 This script learns the steering vector C_perp for positive sentiment in the model's activation space,
-subject to an orthogonality constraint with respect to the aggregated unembedding vector W_pos.
+with a soft overlap penalty on the decoded residual intervention and the unembedding vector W_pos.
 Instead of simply projecting C (learned from a probe) to be orthogonal, we modify the training loss so
 that the learned vector directly minimizes positive classification error while being penalized for 
 alignment with token-level unembeddings.
@@ -30,6 +30,7 @@ import os
 import sys
 import numpy as np
 import torch
+from src.steering.hooks import extract_layer_features, decode_sae_direction
 import torch.nn as nn
 import torch.optim as optim
 import random
@@ -90,14 +91,7 @@ def extract_sae_hidden_state(text):
     Tokenize the input, get hidden states from layer LAYER_SAE, pass them through SAE encoder,
     and average over the token dimension.
     """
-    inputs = tokenizer(text, return_tensors="pt", truncation=True, padding="max_length", max_length=128)
-    inputs = {k: v.to(device) for k, v in inputs.items()}
-    with torch.no_grad():
-        outputs = model(**inputs, output_hidden_states=True)
-    hidden = outputs.hidden_states[LAYER_SAE]  # shape: (1, seq_len, hidden_dim)
-    sae_out = sae.encode(hidden)                # shape: (1, seq_len, hidden_dim)
-    rep = sae_out.mean(dim=1).squeeze()           # shape: (hidden_dim,)
-    return rep.cpu()  # return as CPU tensor
+    return extract_layer_features(model, tokenizer, text, LAYER_SAE, sae=sae)
 
 # Precompute hidden representations and labels
 hidden_states_list = []
@@ -117,18 +111,20 @@ print("Labels shape:", y.shape)
 
 # --- Compute Aggregated Positive Token Unembedding Vector ---
 def get_positive_unembedding(tokenizer, model, tokens):
-    # Get token IDs and then retrieve from model's embedding matrix (assumes tied weights)
+    # Read output-projection rows in residual coordinates; no tied-weight assumption.
     token_vecs = []
     for tok in tokens:
-        tok_id = tokenizer.encode(tok, add_special_tokens=False)[0]
-        # Depending on model architecture: for GPT-2, typically use model.transformer.wte.weight
-        vec = model.transformer.wte.weight[tok_id].detach().cpu()
+        ids = tokenizer.encode(tok, add_special_tokens=False)
+        if len(ids) != 1:
+            raise ValueError(f"Expected a single token for {tok!r}; got {len(ids)}")
+        vec = model.get_output_embeddings().weight[ids[0]].detach().float().cpu()
         token_vecs.append(vec)
     token_vecs = torch.stack(token_vecs)  # shape: (num_tokens, hidden_dim)
     # Return the mean vector
     return token_vecs.mean(dim=0)
 
 W_pos = get_positive_unembedding(tokenizer, model, POSITIVE_TOKENS)  # shape: (hidden_dim,)
+W_pos_sae = sae.W_dec.detach().float() @ W_pos.to(sae.W_dec.device)
 print("Aggregated positive token unembedding vector shape:", W_pos.shape)
 # Normalize for the penalty computation if needed
 # (But we use dot product squared penalty directly)
@@ -184,7 +180,9 @@ for epoch in range(NUM_EPOCHS):
         loss_class = bce_loss_fn(logits, batch_y)
         
         # Orthogonality penalty: encourage C_perp to be orthogonal to W_pos_mean.
-        loss_ortho = orthogonality_penalty(learner.C_perp, W_pos)
+        # (C @ W_dec) dot W_pos = C dot (W_dec @ W_pos).
+        # This is a soft penalty on the decoded intervention, not a hard constraint.
+        loss_ortho = orthogonality_penalty(learner.C_perp, W_pos_sae)
         
         loss = loss_class + LAMBDA_ORTHO * loss_ortho
         loss.backward()
@@ -201,7 +199,8 @@ for epoch in range(NUM_EPOCHS):
     print(f"Epoch {epoch+1}/{NUM_EPOCHS}: Loss = {epoch_loss_avg:.4f}, Accuracy = {accuracy:.2f}%, Penalty = {loss_ortho.item():.4f}")
 
 # After training, extract the learned C_perp vector.
-C_perp_learned = learner.C_perp.detach().cpu().numpy()
+C_perp_latent = learner.C_perp.detach()
+C_perp_learned = decode_sae_direction(C_perp_latent, sae.W_dec).cpu().numpy()
 print("Learned C_perp vector shape:", C_perp_learned.shape)
 print("First 10 elements of C_perp vector:", C_perp_learned[:10])
 
@@ -209,5 +208,5 @@ print("First 10 elements of C_perp vector:", C_perp_learned[:10])
 output_dir = "outputs"
 os.makedirs(output_dir, exist_ok=True)
 np.save(os.path.join(output_dir, "C_perp.npy"), C_perp_learned)
+np.save(os.path.join(output_dir, "C_perp_sae.npy"), C_perp_latent.cpu().numpy())
 print(f"Saved learned C_perp vector to {os.path.join(output_dir, 'C_perp.npy')}")
-

@@ -19,6 +19,7 @@ import os
 import random
 import numpy as np
 import torch
+from src.steering.hooks import extract_layer_features, decode_sae_direction
 from datasets import load_dataset
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from sklearn.decomposition import PCA
@@ -64,23 +65,10 @@ print(f"Using {len(train_sentences)} samples from SST-2.")
 
 # Hidden state extraction functions
 def extract_raw_hidden_state(text, layer_idx=LAYER_RAW):
-    inputs = tokenizer(text, return_tensors="pt")
-    inputs = {k: v.to(next(model.parameters()).device) for k, v in inputs.items()}
-    with torch.no_grad():
-        outputs = model(**inputs, output_hidden_states=True)
-    hidden = outputs.hidden_states[layer_idx]
-    rep = hidden.mean(dim=1).squeeze()
-    return rep.cpu().numpy()
+    return extract_layer_features(model, tokenizer, text, layer_idx).numpy()
 
 def extract_hidden_state_with_sae(text, layer_idx=LAYER_SAE):
-    inputs = tokenizer(text, return_tensors="pt")
-    inputs = {k: v.to(next(model.parameters()).device) for k, v in inputs.items()}
-    with torch.no_grad():
-        outputs = model(**inputs, output_hidden_states=True)
-    hidden = outputs.hidden_states[layer_idx]
-    sae_out = sae.encode(hidden)
-    rep = sae_out.mean(dim=1).squeeze()
-    return rep.cpu().numpy()
+    return extract_layer_features(model, tokenizer, text, layer_idx, sae=sae).numpy()
 
 # Extract representations
 raw_reps = []
@@ -127,8 +115,9 @@ def cosine_similarity(a, b):
 pos_token_vectors = []
 for token in POSITIVE_TOKENS:
     token_ids = tokenizer.encode(token, add_special_tokens=False)
-    tok_id = token_ids[0]
-    vec = model.transformer.wte.weight[tok_id].detach().cpu().numpy()
+    if len(token_ids) != 1:
+        raise ValueError(f"Expected a single token for {token!r}")
+    vec = model.get_output_embeddings().weight[token_ids[0]].detach().float().cpu().numpy()
     pos_token_vectors.append(vec)
 
 pos_token_vectors = np.stack(pos_token_vectors)
@@ -142,8 +131,9 @@ W_pos_pc1 = pca.components_[0]
 # Compute similarities
 cos_sim_raw_mean = cosine_similarity(CAA_raw, W_pos_mean)
 cos_sim_raw_pc1 = cosine_similarity(CAA_raw, W_pos_pc1)
-cos_sim_sae_mean = cosine_similarity(CAA_sae, W_pos_mean)
-cos_sim_sae_pc1 = cosine_similarity(CAA_sae, W_pos_pc1)
+CAA_sae_residual = decode_sae_direction(torch.as_tensor(CAA_sae), sae.W_dec).numpy()
+cos_sim_sae_mean = cosine_similarity(CAA_sae_residual, W_pos_mean)
+cos_sim_sae_pc1 = cosine_similarity(CAA_sae_residual, W_pos_pc1)
 
 print("\nCosine Similarities for CAA (raw representation):")
 print("  CAA_raw & W_pos_mean:", cos_sim_raw_mean)
@@ -157,7 +147,8 @@ print("  CAA_sae & W_pos_pc1 :", cos_sim_sae_pc1)
 output_dir = "outputs"
 os.makedirs(output_dir, exist_ok=True)
 np.save(os.path.join(output_dir, "CAA_raw.npy"), CAA_raw)
-np.save(os.path.join(output_dir, "CAA_sae.npy"), CAA_sae)
+np.save(os.path.join(output_dir, "CAA_sae.npy"), CAA_sae_residual)
+np.save(os.path.join(output_dir, "CAA_sae_latent.npy"), CAA_sae)
 
 print(f"\nSaved CAA_raw vector to {os.path.join(output_dir, 'CAA_raw.npy')}")
 print(f"Saved CAA_sae vector to {os.path.join(output_dir, 'CAA_sae.npy')}")
